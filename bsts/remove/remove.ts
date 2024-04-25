@@ -1,6 +1,7 @@
 import { BNodeNum, BSTNum } from "../common/bst";
 import { findSuccessor } from "../successor/successor";
 import { find } from "../find/find";
+import { b } from "vitest/dist/suite-HPAKvIxA";
 
 function findParent(node: BNodeNum | null, val: number): BNodeNum | null {
 
@@ -20,66 +21,64 @@ function findParent(node: BNodeNum | null, val: number): BNodeNum | null {
 /** remove(bst, val): Removes a node in the BST with the value val.
  * Returns the removed node. */
 
-function remove(bst: BSTNum, val: number): BNodeNum {
+function removeOld(bst: BSTNum, val: number): BNodeNum {
   const nodeToRemove = find(bst.root, val)!;
   if (!nodeToRemove) throw new Error();
   const parentNode = findParent(bst.root, val);
 
-  const rootHasNoChildren = (!bst.root!.left && !bst.root!.right);
-
+  // If node to remove is the root
   if (!parentNode) {
-    if (rootHasNoChildren) {
-      bst.root = null;
-      return nodeToRemove;
 
-    } else if (bst.root?.right && bst.root?.left) {
+    // If root has both children
+    if (bst.root?.right && bst.root?.left) {
       const successor = findSuccessor(nodeToRemove)!;
       remove(bst, successor.val);
       successor.left = nodeToRemove.left;
       successor.right = nodeToRemove.right;
       bst.root = successor;
-      return nodeToRemove;
 
+      // If root has just left child
     } else if (bst.root?.left) {
       bst.root = bst.root?.left;
-      return nodeToRemove;
 
-    } else {
+      // If root has just right child
+    } else if (bst.root?.right) {
       bst.root = bst.root!.right;
-      return nodeToRemove;
+
+      // If root has no children
+    } else {
+      bst.root = null;
     }
+
+    return nodeToRemove;
   }
 
+  let toSet;
 
+  // If node to remove has two children
   if (nodeToRemove.right && nodeToRemove.left) {
     const successor = findSuccessor(nodeToRemove)!;
     remove(bst, successor.val);
     successor.left = nodeToRemove.left;
     successor.right = nodeToRemove.right;
+    toSet = successor;
 
-    if (nodeToRemove === parentNode?.left) {
-      parentNode!.left = successor;
-    } else {
-      parentNode!.right = successor;
-    }
-
+    // If node to remove has just left child
   } else if (nodeToRemove.left) {
+    toSet = nodeToRemove.left;
 
-    if (nodeToRemove === parentNode?.left) {
-      parentNode!.left = nodeToRemove.left;
-    } else {
-      parentNode!.right = nodeToRemove.left;
-    }
-
+    // If node to remove has just right child or no children
   } else {
-
-    if (nodeToRemove === parentNode?.left) {
-      parentNode!.left = nodeToRemove.right;
-    } else {
-      parentNode!.right = nodeToRemove.right;
-    }
-
+    toSet = nodeToRemove.right;
   }
+
+
+  if (nodeToRemove === parentNode?.left) {
+    parentNode!.left = toSet;
+  } else {
+    parentNode!.right = toSet;
+  }
+
 
   return nodeToRemove;
 }
@@ -91,17 +90,45 @@ function remove(bst: BSTNum, val: number): BNodeNum {
 
 
 
+/** remove(bst, val): Removes a node in the BST with the value val.
+ * Returns the removed node. */
 
+function remove(bst: BSTNum, val: number): BNodeNum {
+  const nodeToRemove = find(bst.root, val)!;
+  if (!nodeToRemove) throw new Error();
 
-// edge case: remove root
-// find parent of node to remove
-// if node to remove is leaf, trivial, set parent.left or parent.right to be null
-// if node to remove is not leaf
-// if node has right child, want to find successor
-// if node has no right child, want to find predecessor
-// in either case, want to find parent of element in question in order to set its child to null
-// replace node with predecesor or successor, set right and left.
+  let replacementNode;
 
+  if (nodeToRemove.right && nodeToRemove.left) {
+    const successor = findSuccessor(nodeToRemove)!;
+    remove(bst, successor.val);
+    successor.left = nodeToRemove.left;
+    successor.right = nodeToRemove.right;
+    replacementNode = successor;
+
+  } else if (nodeToRemove.left) {
+    replacementNode = nodeToRemove.left;
+
+  } else if (nodeToRemove.right) {
+    replacementNode = nodeToRemove.right;
+
+  } else {
+    replacementNode = null;
+  }
+
+  const parentNode = findParent(bst.root, val);
+  if (parentNode) {
+    if (nodeToRemove === parentNode?.left) {
+      parentNode!.left = replacementNode;
+    } else {
+      parentNode!.right = replacementNode;
+    }
+  } else {
+    bst.root = replacementNode;
+  }
+
+  return nodeToRemove;
+}
 
 
 
