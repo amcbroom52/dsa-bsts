@@ -1,21 +1,20 @@
 import { BNodeNum, BSTNum } from "../common/bst";
+import { findSuccessor } from "../successor/successor";
 import { find } from "../find/find";
 
-/* returns the value */
-function findAndRemoveSuccessor(node: BNodeNum): number {
-  // if (!node || !node.right) return null;
+function findParent(node: BNodeNum | null, val: number): BNodeNum | null {
 
-  // let current = node.right;
-  // while (current.left !== null) {
-  //   current = current.left;
-  // }
+  while (node !== null) {
+    if (node.left?.val === val || node.right?.val === val) return node;
 
-  // return current;
-}
+    if (node.val > val) {
+      node = node.left;
+    } else {
+      node = node.right;
+    }
+  }
 
-/* return the value */
-function findAndRemovePredecessor(node: BNodeNum): number {
-  return 42;
+  return null;
 }
 
 /** remove(bst, val): Removes a node in the BST with the value val.
@@ -23,38 +22,85 @@ function findAndRemovePredecessor(node: BNodeNum): number {
 
 function remove(bst: BSTNum, val: number): BNodeNum {
   const nodeToRemove = find(bst.root, val)!;
+  if (!nodeToRemove) throw new Error();
+  const parentNode = findParent(bst.root, val);
 
   const rootHasNoChildren = (!bst.root!.left && !bst.root!.right);
-  if (nodeToRemove === bst.root && rootHasNoChildren) {
-    bst.root = null;
-    return nodeToRemove;
+
+  if (!parentNode) {
+    if (rootHasNoChildren) {
+      bst.root = null;
+      return nodeToRemove;
+
+    } else if (bst.root?.right && bst.root?.left) {
+      const successor = findSuccessor(nodeToRemove)!;
+      remove(bst, successor.val);
+      successor.left = nodeToRemove.left;
+      successor.right = nodeToRemove.right;
+      bst.root = successor;
+      return nodeToRemove;
+
+    } else if (bst.root?.left) {
+      bst.root = bst.root?.left;
+      return nodeToRemove;
+
+    } else {
+      bst.root = bst.root!.right;
+      return nodeToRemove;
+    }
   }
 
-  if (nodeToRemove.right) {
-    nodeToRemove.val = findAndRemoveSuccessor(nodeToRemove);
+
+  if (nodeToRemove.right && nodeToRemove.left) {
+    const successor = findSuccessor(nodeToRemove)!;
+    remove(bst, successor.val);
+    successor.left = nodeToRemove.left;
+    successor.right = nodeToRemove.right;
+
+    if (nodeToRemove === parentNode?.left) {
+      parentNode!.left = successor;
+    } else {
+      parentNode!.right = successor;
+    }
+
   } else if (nodeToRemove.left) {
-    nodeToRemove.val = findAndRemovePredecessor(nodeToRemove);
+
+    if (nodeToRemove === parentNode?.left) {
+      parentNode!.left = nodeToRemove.left;
+    } else {
+      parentNode!.right = nodeToRemove.left;
+    }
+
   } else {
-    const parent = findParent(bst.root, nodeToRemove)
-    // set child to null
+
+    if (nodeToRemove === parentNode?.left) {
+      parentNode!.left = nodeToRemove.right;
+    } else {
+      parentNode!.right = nodeToRemove.right;
+    }
+
   }
 
-  return new BNodeNum(val);
+  return nodeToRemove;
 }
+//find node and parent
+//if node is leaf, remove from parent
+//if node has one child, make child node into child of parent
+// if node has two children, call remove on successor and make found node into successor node
+// if node is root with no children, set bst.root = null
 
 
 
 
 
-
-  // edge case: remove root
-  // find parent of node to remove
-  // if node to remove is leaf, trivial, set parent.left or parent.right to be null
-  // if node to remove is not leaf
-  // if node has right child, want to find successor
-  // if node has no right child, want to find predecessor
-  // in either case, want to find parent of element in question in order to set its child to null
-  // replace node with predecesor or successor, set right and left.
+// edge case: remove root
+// find parent of node to remove
+// if node to remove is leaf, trivial, set parent.left or parent.right to be null
+// if node to remove is not leaf
+// if node has right child, want to find successor
+// if node has no right child, want to find predecessor
+// in either case, want to find parent of element in question in order to set its child to null
+// replace node with predecesor or successor, set right and left.
 
 
 
